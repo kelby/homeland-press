@@ -9,6 +9,11 @@ Homeland::Press::Engine.routes.draw do
     end
   end
   namespace :admin do
-    resources :posts
+    resources :posts do
+      member do
+        put :published
+        put :rejected
+      end
+    end
   end
 end
