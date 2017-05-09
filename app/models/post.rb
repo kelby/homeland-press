@@ -11,7 +11,9 @@ class Post < ApplicationRecord
 
   before_save :generate_summary
   before_create :generate_published_at
-  before_validation :safe_slug
+  # before_validation :safe_slug
+  before_create :set_slug
+  after_validation :detect_postfix_slug
 
   def to_param
     self.slug.blank? ? self.id : self.slug
@@ -40,6 +42,18 @@ class Post < ApplicationRecord
   def safe_slug
     self.slug.downcase!
     self.slug.gsub!(/[^a-z0-9]/i, '-')
+  end
+
+  def set_slug
+    self.slug = Pinyin.t(self.title, splitter: "-").parameterize
+  end
+
+  def detect_postfix_slug
+    if self.errors[:slug].include? I18n.t("errors.messages.taken")
+      self.slug = "#{self.slug}-#{SecureRandom.hex(1)}"
+
+      self.errors.delete(:slug)
+    end
   end
 
   def generate_published_at
